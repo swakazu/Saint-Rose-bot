@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from config import LOG_CHANNEL_ID, MAX_CLEAR_MESSAGES
 from utils import is_admin, can_moderate, get_admin_level
 import database as db
+from server_logger import ServerLogger  # 👈 ДОБАВЛЕНО
+
 
 def setup_moderation_commands(bot):
     
@@ -17,6 +19,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Нельзя замутить вышестоящего!", ephemeral=True)
         
         await member.timeout(timedelta(minutes=minutes), reason=reason)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, f"МЬЮТ на {minutes} мин: {reason}")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         embed = discord.Embed(title="🔇 Мьют", description=f"{member.mention} замьючен на {minutes} мин.", color=discord.Color.orange())
         embed.add_field(name="Причина", value=reason)
         await interaction.response.send_message(embed=embed)
@@ -29,6 +40,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Нельзя размьютить вышестоящего!", ephemeral=True)
         
         await member.timeout(None)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, "СНЯТИЕ МЬЮТА")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         await interaction.response.send_message(f"✅ {member.mention} размьючен.")
 
     @bot.tree.command(name="пред", description="Выдать предупреждение участнику")
@@ -40,6 +60,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Нельзя выдать предупреждение вышестоящему!", ephemeral=True)
         
         count = db.add_warning(member.id, interaction.guild_id, interaction.user.id, reason)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, f"ПРЕДУПРЕЖДЕНИЕ #{count}: {reason}")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         embed = discord.Embed(title="⚠️ Предупреждение", description=f"{member.mention} получил предупреждение #{count}", color=discord.Color.yellow())
         embed.add_field(name="Причина", value=reason)
         await interaction.response.send_message(embed=embed)
@@ -66,6 +95,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Нельзя забанить вышестоящего!", ephemeral=True)
         
         await member.ban(reason=f"{interaction.user}: {reason}")
+        
+        # 👇 ЛОГИРОВАНИЕ (дублируем, так как on_member_ban тоже сработает)
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, f"БАН: {reason}")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         embed = discord.Embed(title="🔨 Бан", description=f"{member.mention} забанен", color=discord.Color.red())
         embed.add_field(name="Причина", value=reason)
         await interaction.response.send_message(embed=embed)
@@ -79,6 +117,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Нельзя кикнуть вышестоящего!", ephemeral=True)
         
         await member.kick(reason=f"{interaction.user}: {reason}")
+        
+        # 👇 ЛОГИРОВАНИЕ (дублируем, так как on_member_remove тоже сработает)
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, f"КИК: {reason}")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         embed = discord.Embed(title="👢 Кик", description=f"{member.mention} кикнут", color=discord.Color.orange())
         embed.add_field(name="Причина", value=reason)
         await interaction.response.send_message(embed=embed)
@@ -92,6 +139,22 @@ def setup_moderation_commands(bot):
         amount = min(amount, MAX_CLEAR_MESSAGES)
         await interaction.response.send_message(f"✅ Очищаю {amount} сообщений...", ephemeral=True)
         await interaction.channel.purge(limit=amount)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                embed = discord.Embed(
+                    title="🗑️ Очистка сообщений",
+                    description=f"**Модератор:** {interaction.user.mention}\n**Канал:** {interaction.channel.mention}\n**Удалено:** {amount} сообщений",
+                    color=discord.Color.red(),
+                    timestamp=datetime.now()
+                )
+                channel = bot.get_channel(LOG_CHANNEL_ID)
+                if channel:
+                    await channel.send(embed=embed)
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
 
     @bot.tree.command(name="блок_заявки", description="Заблокировать подачу заявки на администратора")
     @app_commands.describe(member="Участник", days="Дни", hours="Часы", minutes="Минуты", reason="Причина блокировки")
@@ -111,6 +174,18 @@ def setup_moderation_commands(bot):
         
         db.block_admin_application(member.id, days, hours, minutes)
         
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(
+                    interaction.user, 
+                    member, 
+                    f"БЛОКИРОВКА ЗАЯВОК на {days}д {hours}ч {minutes}мин: {reason}"
+                )
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         embed = discord.Embed(
             title="🔒 Блокировка заявок",
             description=f"Пользователю {member.mention} заблокирована подача заявок на администратора",
@@ -129,6 +204,15 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
         
         db.unblock_admin_application(member.id)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(interaction.user, member, "СНЯТИЕ БЛОКИРОВКИ ЗАЯВОК")
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
+        
         await interaction.response.send_message(f"✅ Пользователю {member.mention} разблокирована подача заявок!", ephemeral=True)
 
     @bot.tree.command(name="отклонить_заявку", description="Отклонить заявку и заблокировать пользователя")
@@ -138,6 +222,18 @@ def setup_moderation_commands(bot):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
         
         db.block_admin_application(member.id, days=days)
+        
+        # 👇 ЛОГИРОВАНИЕ
+        try:
+            logger_cog = bot.get_cog("ServerLogger")
+            if logger_cog:
+                await logger_cog.log_warning(
+                    interaction.user, 
+                    member, 
+                    f"ОТКЛОНЕНИЕ ЗАЯВКИ + блокировка на {days} дней"
+                )
+        except Exception as e:
+            print(f"Ошибка логирования: {e}")
         
         embed = discord.Embed(
             title="❌ Заявка отклонена",
