@@ -2,11 +2,13 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+import traceback
 
 from config import TOKEN, GUILD_ID, BOT_NAME, logger
 import database as db
 from events import setup_events
 from commands import setup_commands
+from server_logger import setup_server_logger  # 👈 ДОБАВЛЕНО
 
 # Создание папки для логов если её нет
 os.makedirs("logs", exist_ok=True)
@@ -17,6 +19,7 @@ intents.message_content = True
 intents.members = True
 intents.guilds = True
 intents.voice_states = True
+intents.moderation = True  # 👈 ДОБАВЛЕНО для отслеживания банов
 
 # Создание бота
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -38,6 +41,9 @@ async def on_ready():
     print(f"✅ {BOT_NAME} запущен!")
     print(f"📡 Подключён как: {bot.user}")
     print(f"🌐 Серверов: {len(bot.guilds)}")
+    
+    # 👇 АКТИВАЦИЯ ЛОГГЕРА
+    await setup_server_logger(bot)
     
     guild = bot.get_guild(GUILD_ID)
     if guild:
@@ -67,7 +73,12 @@ async def main():
     """Главная асинхронная функция"""
     async with bot:
         bot.loop.create_task(background_tasks())
-        await bot.start(TOKEN)
+        try:
+            await bot.start(TOKEN)
+        except Exception as e:
+            print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
+            print(traceback.format_exc())
+            raise e
 
 if __name__ == "__main__":
     asyncio.run(main())
