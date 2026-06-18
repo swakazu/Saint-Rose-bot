@@ -46,10 +46,11 @@ class ServerLogger(commands.Cog):
     async def on_member_remove(self, member):
         """Выход участника с сервера (или кик)"""
         # Проверяем, был ли участник кикнут
+        is_kick = False
         try:
             async for entry in member.guild.audit_logs(limit=5, action=discord.AuditLogAction.kick):
                 if entry.target.id == member.id:
-                    # Это был кик!
+                    is_kick = True
                     embed = discord.Embed(
                         title="👢 Участник кикнут",
                         description=f"**Пользователь:** {member.mention}\n**ID:** {member.id}",
@@ -64,25 +65,26 @@ class ServerLogger(commands.Cog):
                     channel = self.bot.get_channel(LOG_CHANNEL_ID)
                     if channel:
                         await channel.send(embed=embed)
-                    return
+                    break
         except:
             pass
         
         # Если это не кик — обычный выход
-        embed = discord.Embed(
-            title="🚪 Участник покинул сервер",
-            description=f"{member.mention} вышел с сервера",
-            color=discord.Color.orange(),
-            timestamp=datetime.now()
-        )
-        embed.add_field(name="👤 ID", value=member.id, inline=True)
-        embed.add_field(name="📅 Присоединился", value=member.joined_at.strftime("%d.%m.%Y %H:%M") if member.joined_at else "Неизвестно", inline=True)
-        embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_footer(text=f"Всего участников: {member.guild.member_count}")
-        
-        channel = self.bot.get_channel(LOG_CHANNEL_ID)
-        if channel:
-            await channel.send(embed=embed)
+        if not is_kick:
+            embed = discord.Embed(
+                title="🚪 Участник покинул сервер",
+                description=f"{member.mention} вышел с сервера",
+                color=discord.Color.orange(),
+                timestamp=datetime.now()
+            )
+            embed.add_field(name="👤 ID", value=member.id, inline=True)
+            embed.add_field(name="📅 Присоединился", value=member.joined_at.strftime("%d.%m.%Y %H:%M") if member.joined_at else "Неизвестно", inline=True)
+            embed.set_thumbnail(url=member.display_avatar.url)
+            embed.set_footer(text=f"Всего участников: {member.guild.member_count}")
+            
+            channel = self.bot.get_channel(LOG_CHANNEL_ID)
+            if channel:
+                await channel.send(embed=embed)
     
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
@@ -436,7 +438,9 @@ class ServerLogger(commands.Cog):
             changes.append(f"🔄 Позиция: `{before.position}` → `{after.position}`")
         if before.category != after.category:
             changes.append(f"📂 Категория: `{before.category}` → `{after.category}`")
-        if before.topic != after.topic and hasattr(before, 'topic'):
+        
+        # ✅ ИСПРАВЛЕНО: сначала проверяем наличие атрибута
+        if hasattr(before, 'topic') and before.topic != after.topic:
             changes.append(f"📝 Тема: `{before.topic}` → `{after.topic}`")
         
         if changes:
