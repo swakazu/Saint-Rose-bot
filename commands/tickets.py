@@ -164,4 +164,10 @@ def setup_tickets_commands(bot):
         
         view = TicketButtonsView()
         await interaction.channel.send(embed=embed, view=view)
-        await interaction.response.send_message("✅ Панель тикетов создана!", ephemeral=True)
+        
+        # ✅ Используем followup вместо response, если interaction уже использован
+        try:
+            await interaction.response.send_message("✅ Панель тикетов создана!", ephemeral=True)
+        except discord.errors.NotFound:
+            # Если interaction истек — используем followup
+            await interaction.followup.send("✅ Панель тикетов создана!", ephemeral=True)
