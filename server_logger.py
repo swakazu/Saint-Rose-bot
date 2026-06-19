@@ -369,31 +369,6 @@ class ServerLogger(commands.Cog):
             channel = self.bot.get_channel(LOG_CHANNEL_ID)
             if channel:
                 await channel.send(embed=embed)
-        
-        # Изменение статуса (микрофон/наушники)
-        if before.self_mute != after.self_mute:
-            status = "🔇 выключил" if after.self_mute else "🎤 включил"
-            embed = discord.Embed(
-                title=f"🎙️ {member.display_name} {status} микрофон",
-                color=discord.Color.blue() if not after.self_mute else discord.Color.orange(),
-                timestamp=datetime.now()
-            )
-            
-            channel = self.bot.get_channel(LOG_CHANNEL_ID)
-            if channel:
-                await channel.send(embed=embed)
-        
-        if before.self_deaf != after.self_deaf:
-            status = "🔇 выключил" if after.self_deaf else "🔊 включил"
-            embed = discord.Embed(
-                title=f"🔊 {member.display_name} {status} звук",
-                color=discord.Color.blue() if not after.self_deaf else discord.Color.orange(),
-                timestamp=datetime.now()
-            )
-            
-            channel = self.bot.get_channel(LOG_CHANNEL_ID)
-            if channel:
-                await channel.send(embed=embed)
     
     # ========== КАНАЛЫ ==========
     
