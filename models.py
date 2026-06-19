@@ -80,8 +80,35 @@ class TicketButtonsView(discord.ui.View):
                 f"Причина: отклонение предыдущей заявки.",
                 ephemeral=True
             )
-        from commands.tickets import AdminApplicationModal
-        await interaction.response.send_modal(AdminApplicationModal())
+        
+        # --- НОВАЯ ЛОГИКА: Отправляем ссылку на Google Форму ---
+        embed = discord.Embed(
+            title="📝 Заявка на пост Helper",
+            description="Для подачи заявки на должность Helper, пожалуйста, заполните официальную форму.",
+            color=discord.Color.gold(),
+            timestamp=datetime.now()
+        )
+        embed.add_field(
+            name="🔗 Ссылка на форму",
+            value="[Нажмите здесь, чтобы перейти к заполнению заявки](https://forms.gle/PuPzJyyBtZ5ZCSFe8)",
+            inline=False
+        )
+        embed.add_field(
+            name="📌 Важно",
+            value="• Заявки принимаются от кандидатов от 13 лет (исключения обсуждаются).\n"
+                  "• Убедитесь, что вы можете уделять время серверу.\n"
+                  "• Заполните форму максимально подробно.",
+            inline=False
+        )
+        embed.set_footer(text="Saint-Rose Project • Заявки на Helper")
+        
+        # Пытаемся отправить в ЛС
+        try:
+            await interaction.user.send(embed=embed)
+            await interaction.response.send_message("✅ Я отправил вам ссылку на форму в личные сообщения! Проверьте ЛС.", ephemeral=True)
+        except discord.Forbidden:
+            # Если ЛС закрыты — отправляем в канал (только пользователь видит)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class AmnestyModal(discord.ui.Modal, title="⚠️ Запрос на амнистию"):
