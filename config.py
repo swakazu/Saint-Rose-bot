@@ -16,6 +16,10 @@ PRIVATE_VOICE_DELETE_TIMEOUT = 30
 
 BOT_NAME = "Saint-Rose"
 
+# ========== ССЫЛКИ ДЛЯ КНОПОК ==========
+DISCORD_LINK = "https://discord.gg/saintroseproject"  # 👈 ЗАМЕНИ НА СВОЮ
+TELEGRAM_LINK = "https://t.me/saintroseproject"        # 👈 ЗАМЕНИ НА СВОЮ
+
 ADMIN_ROLES_IN_ORDER = [
     "Владелец", "Со-Владелец", "Зам. Владельца", "Saint-Rose Team",
     "Управляющий", "Менеджер", "Зам. Менеджера", "Старший куратор",
