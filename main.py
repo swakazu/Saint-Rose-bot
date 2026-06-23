@@ -58,11 +58,22 @@ async def background_tasks():
 
 
 # ========== СОБЫТИЯ БОТА ==========
+# main.py (часть с on_ready)
+
 @bot.event
 async def on_ready():
     print(f"✅ {BOT_NAME} запущен!")
     print(f"📡 Подключён как: {bot.user}")
     print(f"🌐 Серверов: {len(bot.guilds)}")
+    
+    # Устанавливаем статус "Играет в SR"
+    await bot.change_presence(
+        activity=discord.Game(
+            name="🩷Saint-Rose🩷"
+        )
+    )
+    
+    # ... остальной код
     
     # Активация логгера
     await setup_server_logger(bot)
