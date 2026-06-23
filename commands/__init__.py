@@ -8,6 +8,7 @@ from commands.information import setup_information_commands
 from commands.profile import setup_profile_commands
 from commands.custom_commands import setup_custom_commands
 from commands.private_voice import setup_private_voice
+from commands.voice import setup_voice_commands  # 👈 НОВОЕ
 
 def setup_commands(bot):
     setup_moderation_commands(bot)
@@ -20,3 +21,4 @@ def setup_commands(bot):
     setup_profile_commands(bot)
     setup_custom_commands(bot)
     setup_private_voice(bot)
+    setup_voice_commands(bot)  # 👈 НОВОЕ
