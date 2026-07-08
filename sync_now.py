@@ -2,7 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-TOKEN = "MTUxMTA4NDk0NDE2MjgxNjAzMQ.GCvFJe.Ocd_iYyyHNbCLAZD9poIBaOIcXSILLKzcvj1Gk"
+TOKEN = os.getenv("TOKEN")
 GUILD_ID = 1510638426016448602
 
 intents = discord.Intents.default()
