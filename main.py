@@ -1,9 +1,9 @@
+import asyncio
 import discord
 from discord.ext import commands
-import asyncio
 import os
 import traceback
-from aiohttp import web  # 👈 ДОБАВЛЕНО для веб-сервера
+from aiohttp import web
 
 from config import TOKEN, GUILD_ID, BOT_NAME, logger
 import database as db
@@ -11,7 +11,7 @@ from events import setup_events
 from commands import setup_commands
 from server_logger import setup_server_logger
 
-# Создание папки для логов если её нет
+# Создание папки для логов
 os.makedirs("logs", exist_ok=True)
 
 # Настройка интентов
@@ -20,76 +20,62 @@ intents.message_content = True
 intents.members = True
 intents.guilds = True
 intents.voice_states = True
-intents.moderation = True  # для отслеживания банов
+intents.moderation = True
 
-# Создание бота
-bot = commands.Bot(command_prefix="!", intents=intents)
+# Создание бота с дополнительными настройками
+bot = commands.Bot(
+    command_prefix="!", 
+    intents=intents,
+    max_messages=1000  # Ограничиваем кэш
+)
 
-# Регистрация событий
+# Регистрация событий и команд
 setup_events(bot)
-
-# Регистрация команд
 setup_commands(bot)
 
 
 # ========== ВЕБ-СЕРВЕР ДЛЯ ПИНГА ==========
 async def health_check(request):
-    """Простой ответ для проверки работы бота"""
     return web.Response(text="OK")
 
-
 async def start_web_server():
-    """Запускает веб-сервер для Render на порту 10000"""
     app = web.Application()
-    app.router.add_get('/', health_check)  # Ответ на GET-запросы по адресу /
+    app.router.add_get('/', health_check)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 10000)  # Привязываемся к порту 10000
+    site = web.TCPSite(runner, '0.0.0.0', 10000)
     await site.start()
-    print("✅ Веб-сервер для проверки здоровья запущен на порту 10000")
+    print("✅ Веб-сервер запущен на порту 10000")
 
 
 # ========== ФОНОВЫЕ ЗАДАЧИ ==========
 async def background_tasks():
-    """Фоновая задача для проверки напоминаний"""
     await bot.wait_until_ready()
     from utils import check_reminders
     await check_reminders(bot)
 
 
 # ========== СОБЫТИЯ БОТА ==========
-# main.py (часть с on_ready)
-
 @bot.event
 async def on_ready():
     print(f"✅ {BOT_NAME} запущен!")
     print(f"📡 Подключён как: {bot.user}")
     print(f"🌐 Серверов: {len(bot.guilds)}")
-
     
-    # ... остальной код
-    
-    # Активация логгера
     await setup_server_logger(bot)
     
     guild = bot.get_guild(GUILD_ID)
     if guild:
         try:
-            # Синхронизация команд для конкретного сервера
             await bot.tree.sync(guild=guild)
             print(f"✓ Команды синхронизированы для сервера {guild.name}")
-            
-            # Показываем все команды
             commands_list = await bot.tree.fetch_commands(guild=guild)
             print(f"📋 Зарегистрировано команд: {len(commands_list)}")
-            for cmd in commands_list:
-                print(f"  - /{cmd.name}")
         except Exception as e:
             print(f"⚠️ Ошибка синхронизации: {e}")
     else:
         print(f"⚠️ Сервер с ID {GUILD_ID} не найден")
     
-    # Также синхронизируем глобально
     try:
         await bot.tree.sync()
         print("✓ Глобальная синхронизация выполнена")
@@ -100,13 +86,29 @@ async def on_ready():
 # ========== ЗАПУСК ==========
 async def main():
     """Главная асинхронная функция"""
-    # 👇 ЗАПУСКАЕМ ВЕБ-СЕРВЕР ПЕРЕД БОТОМ
     await start_web_server()
+    
+    # 👇 ВАЖНО: задержка перед подключением к Discord
+    print("⏳ Ожидание 10 секунд перед подключением...")
+    await asyncio.sleep(10)
     
     async with bot:
         bot.loop.create_task(background_tasks())
         try:
-            await bot.start(TOKEN)
+            # 👇 Добавляем повторные попытки
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    await bot.start(TOKEN)
+                    break
+                except discord.errors.HTTPException as e:
+                    if "429" in str(e):
+                        print(f"⚠️ Попытка {attempt + 1}/{max_retries} не удалась. Ожидание 30 секунд...")
+                        await asyncio.sleep(30)
+                        if attempt == max_retries - 1:
+                            raise
+                    else:
+                        raise
         except Exception as e:
             print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
             print(traceback.format_exc())
