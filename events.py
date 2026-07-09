@@ -44,12 +44,3 @@ def setup_events(bot):
         else:
             db.update_user_level(message.author.id, current_xp, current_level, new_msg_count)
         
-        # Фильтр плохих слов
-        if any(word in message.content.lower() for word in BAD_WORDS):
-            try:
-                await message.delete()
-                await message.channel.send(f"{message.author.mention}, не используйте запрещённые слова!", delete_after=5)
-            except:
-                pass
-        
-        await bot.process_commands(message)
