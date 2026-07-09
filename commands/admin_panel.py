@@ -1,15 +1,29 @@
 import discord
 from discord import app_commands
 from datetime import datetime, timedelta
-
-from utils import is_admin, can_moderate
+from utils import is_admin
 import database as db
 
+class GiveCookieModal(discord.ui.Modal, title="🍪 Дать печеньку"):
+    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID", required=True)
+    amount = discord.ui.TextInput(label="Количество", placeholder="Сколько печенек", required=True, default="1")
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            member = await interaction.guild.fetch_member(int(self.member_id.value))
+            amount = int(self.amount.value)
+        except:
+            return await interaction.response.send_message("❌ Неверный ID или количество", ephemeral=True)
+        
+        if amount < 1 or amount > 100:
+            return await interaction.response.send_message("❌ От 1 до 100 печенек", ephemeral=True)
+        
+        db.add_cookie(member.id, amount)
+        await interaction.response.send_message(f"🍪 {member.mention} получил {amount} печенек!", ephemeral=True)
 
-
-class MuteModal(discord.ui.Modal, title="🔇 Мьют участника"):
-    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID пользователя", required=True)
-    minutes = discord.ui.TextInput(label="Минуты", placeholder="На сколько минут замьютить", required=True)
+class MuteModal(discord.ui.Modal, title="🔇 Мьют"):
+    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID", required=True)
+    minutes = discord.ui.TextInput(label="Минуты", placeholder="На сколько минут", required=True)
     reason = discord.ui.TextInput(label="Причина", placeholder="Причина мьюта", required=False, default="Не указана")
     
     async def on_submit(self, interaction: discord.Interaction):
@@ -19,14 +33,15 @@ class MuteModal(discord.ui.Modal, title="🔇 Мьют участника"):
         except:
             return await interaction.response.send_message("❌ Неверный ID или количество минут", ephemeral=True)
         
+        from utils import can_moderate
         if not can_moderate(interaction.user, member):
             return await interaction.response.send_message("❌ Нельзя замутить вышестоящего!", ephemeral=True)
         
         await member.timeout(timedelta(minutes=minutes), reason=self.reason.value)
-        await interaction.response.send_message(f"✅ {member.mention} замьючен на {minutes} мин. Причина: {self.reason.value}", ephemeral=True)
+        await interaction.response.send_message(f"✅ {member.mention} замьючен на {minutes} мин.", ephemeral=True)
 
 class WarnModal(discord.ui.Modal, title="⚠️ Предупреждение"):
-    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID пользователя", required=True)
+    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID", required=True)
     reason = discord.ui.TextInput(label="Причина", placeholder="Причина предупреждения", required=True)
     
     async def on_submit(self, interaction: discord.Interaction):
@@ -35,27 +50,16 @@ class WarnModal(discord.ui.Modal, title="⚠️ Предупреждение"):
         except:
             return await interaction.response.send_message("❌ Неверный ID", ephemeral=True)
         
+        from utils import can_moderate
         if not can_moderate(interaction.user, member):
             return await interaction.response.send_message("❌ Нельзя выдать предупреждение вышестоящему!", ephemeral=True)
         
         db.add_warning(member.id, interaction.guild_id, interaction.user.id, self.reason.value)
         await interaction.response.send_message(f"⚠️ {member.mention} получил предупреждение. Причина: {self.reason.value}", ephemeral=True)
 
-class GiveCookieModal(discord.ui.Modal, title="🍪 Дать печеньку"):
-    member_id = discord.ui.TextInput(label="ID участника", placeholder="Введите ID пользователя", required=True)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        try:
-            member = await interaction.guild.fetch_member(int(self.member_id.value))
-        except:
-            return await interaction.response.send_message("❌ Неверный ID", ephemeral=True)
-        
-        db.add_cookie(member.id)
-        await interaction.response.send_message(f"🍪 {interaction.user.mention} дал печеньку {member.mention}!", ephemeral=True)
-
 class SayModal(discord.ui.Modal, title="💬 Отправить сообщение"):
     channel_id = discord.ui.TextInput(label="ID канала", placeholder="Введите ID канала", required=True)
-    message = discord.ui.TextInput(label="Текст сообщения", placeholder="Что отправить?", style=discord.TextStyle.paragraph, required=True)
+    message = discord.ui.TextInput(label="Текст", placeholder="Что отправить?", style=discord.TextStyle.paragraph, required=True)
     
     async def on_submit(self, interaction: discord.Interaction):
         try:
@@ -84,55 +88,41 @@ class AnnounceModal(discord.ui.Modal, title="📢 Создать объявле�
         await interaction.channel.send(embed=embed)
         await interaction.response.send_message("✅ Объявление отправлено!", ephemeral=True)
 
-
+# ============= ПАНЕЛИ =============
 
 class AdminPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     
-    @discord.ui.button(label="🛡️ Модерация", style=discord.ButtonStyle.primary, custom_id="admin_panel_moderation")
+    @discord.ui.button(label="🛡️ Модерация", style=discord.ButtonStyle.primary, custom_id="admin_moderation")
     async def moderation_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_admin(interaction.user):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
         
-        embed = discord.Embed(
-            title="🛡️ Панель модерации Saint-Rose",
-            description="Выберите действие:",
-            color=discord.Color.blue()
-        )
+        embed = discord.Embed(title="🛡️ Панель модерации", description="Выберите действие:", color=discord.Color.blue())
         await interaction.response.edit_message(embed=embed, view=ModerationPanelView())
     
-    @discord.ui.button(label="💰 Экономика", style=discord.ButtonStyle.success, custom_id="admin_panel_economy")
+    @discord.ui.button(label="💰 Экономика", style=discord.ButtonStyle.success, custom_id="admin_economy")
     async def economy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_admin(interaction.user):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
         
-        embed = discord.Embed(
-            title="💰 Панель экономики",
-            description="Управление печеньками и уровнем:",
-            color=discord.Color.green()
-        )
+        embed = discord.Embed(title="💰 Панель экономики", description="Управление печеньками:", color=discord.Color.green())
         await interaction.response.edit_message(embed=embed, view=EconomyPanelView())
     
-    @discord.ui.button(label="📢 Коммуникация", style=discord.ButtonStyle.secondary, custom_id="admin_panel_communication")
+    @discord.ui.button(label="📢 Коммуникация", style=discord.ButtonStyle.secondary, custom_id="admin_communication")
     async def communication_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_admin(interaction.user):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
         
-        embed = discord.Embed(
-            title="📢 Панель коммуникации",
-            description="Отправка сообщений и объявлений:",
-            color=discord.Color.purple()
-        )
+        embed = discord.Embed(title="📢 Панель коммуникации", description="Отправка сообщений:", color=discord.Color.purple())
         await interaction.response.edit_message(embed=embed, view=CommunicationPanelView())
     
-    @discord.ui.button(label="❌ Закрыть панель", style=discord.ButtonStyle.danger, custom_id="admin_panel_close")
+    @discord.ui.button(label="❌ Закрыть", style=discord.ButtonStyle.danger, custom_id="admin_close")
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not is_admin(interaction.user):
             return await interaction.response.send_message("❌ Ты не администратор!", ephemeral=True)
-        
         await interaction.response.edit_message(content="Панель закрыта.", embed=None, view=None)
-
 
 class ModerationPanelView(discord.ui.View):
     def __init__(self):
@@ -160,13 +150,8 @@ class ModerationPanelView(discord.ui.View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="mod_back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="👑 Админ-панель Saint-Rose",
-            description="Выберите категорию:",
-            color=discord.Color.gold()
-        )
+        embed = discord.Embed(title="👑 Админ-панель", description="Выберите категорию:", color=discord.Color.gold())
         await interaction.response.edit_message(embed=embed, view=AdminPanelView())
-
 
 class EconomyPanelView(discord.ui.View):
     def __init__(self):
@@ -191,13 +176,8 @@ class EconomyPanelView(discord.ui.View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="eco_back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="👑 Админ-панель Saint-Rose",
-            description="Выберите категорию:",
-            color=discord.Color.gold()
-        )
+        embed = discord.Embed(title="👑 Админ-панель", description="Выберите категорию:", color=discord.Color.gold())
         await interaction.response.edit_message(embed=embed, view=AdminPanelView())
-
 
 class CommunicationPanelView(discord.ui.View):
     def __init__(self):
@@ -213,29 +193,19 @@ class CommunicationPanelView(discord.ui.View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="comm_back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="👑 Админ-панель", description="Выберите категорию:", color=discord.Color.gold())
+        await interaction.response.edit_message(embed=embed, view=AdminPanelView())
+
+def setup_admin_panel_commands(bot):
+    @bot.tree.command(name="admin_panel", description="Открыть админ-панель")
+    async def admin_panel(interaction: discord.Interaction):
+        if not is_admin(interaction.user):
+            return await interaction.response.send_message("❌ Только администрация!", ephemeral=True)
+        
         embed = discord.Embed(
             title="👑 Админ-панель Saint-Rose",
             description="Выберите категорию:",
             color=discord.Color.gold()
         )
-        await interaction.response.edit_message(embed=embed, view=AdminPanelView())
-
-
-def setup_admin_panel_commands(bot):
-    
-    @bot.tree.command(name="admin_panel", description="Открыть админ-панель с кнопками")
-    async def admin_panel(interaction: discord.Interaction):
-        if not is_admin(interaction.user):
-            return await interaction.response.send_message("❌ Только администрация может использовать эту панель!", ephemeral=True)
-        
-        embed = discord.Embed(
-            title="👑 Админ-панель Saint-Rose",
-            description="Выберите категорию для управления:\n\n"
-                       "🛡️ **Модерация** — мьют, предупреждения\n"
-                       "💰 **Экономика** — выдача печенек, топ\n"
-                       "📢 **Коммуникация** — say, announce",
-            color=discord.Color.gold()
-        )
         embed.set_footer(text="Используйте кнопки для навигации")
-        
         await interaction.response.send_message(embed=embed, view=AdminPanelView())
