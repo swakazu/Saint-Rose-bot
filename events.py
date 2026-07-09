@@ -1,11 +1,7 @@
 import discord
 import random
-from datetime import datetime
-
-from config import WELCOME_CHANNEL_ID, LOG_CHANNEL_ID, BAD_WORDS, logger
-from config import XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
+from config import BAD_WORDS, XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
 import database as db
-from utils import get_admin_level, is_admin
 
 def setup_events(bot):
     
@@ -15,10 +11,9 @@ def setup_events(bot):
             await bot.process_commands(message)
             return
         
-        # Проверка кастомных команд (префикс !)
+        # Кастомные команды
         if message.content.startswith("!"):
             cmd_name = message.content[1:].lower().split()[0] if " " in message.content else message.content[1:].lower()
-            
             response = db.get_custom_command(cmd_name, message.guild.id if message.guild else 0)
             if response:
                 await message.channel.send(response)
@@ -54,11 +49,7 @@ def setup_events(bot):
             try:
                 await message.delete()
                 await message.channel.send(f"{message.author.mention}, не используйте запрещённые слова!", delete_after=5)
-                logger.info(f"Удалено сообщение от {message.author}: {message.content}")
             except:
                 pass
         
-        # ВАЖНО: обрабатываем команды бота
         await bot.process_commands(message)
-
-    # Остальные события (on_member_join, on_member_remove и т.д.) остаются без изменений
