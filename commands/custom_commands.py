@@ -1,6 +1,5 @@
 import discord
 from discord import app_commands
-
 import database as db
 from utils import is_admin
 
@@ -13,7 +12,7 @@ def setup_custom_commands(bot):
             return await interaction.response.send_message("❌ Только администрация!", ephemeral=True)
         
         if len(name) > 30:
-            return await interaction.response.send_message("❌ Название команды не длиннее 30 символов", ephemeral=True)
+            return await interaction.response.send_message("❌ Название не длиннее 30 символов", ephemeral=True)
         
         db.add_custom_command(name.lower(), interaction.guild_id, response)
         await interaction.response.send_message(f"✅ Команда `{name}` создана!", ephemeral=True)
