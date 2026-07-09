@@ -1,16 +1,14 @@
 import asyncio
 import discord
 from datetime import datetime
-from config import ADMIN_ROLES_IN_ORDER, OWNER_ID
+from config import ADMIN_ROLES_IN_ORDER
 import database as db
 
 def get_admin_level(member):
-    # Если передан User вместо Member
+    """Возвращает уровень администратора (0 - высший, 999 - не админ)"""
     if not hasattr(member, 'roles'):
         return 999
     
-    if member.id == OWNER_ID:
-        return 0
     for i, role_name in enumerate(ADMIN_ROLES_IN_ORDER):
         role = discord.utils.get(member.roles, name=role_name)
         if role:
@@ -18,18 +16,19 @@ def get_admin_level(member):
     return 999
 
 def is_admin(member):
-    # Если передан User вместо Member
+    """Проверяет, является ли участник администратором"""
     if not hasattr(member, 'roles'):
         return False
     return get_admin_level(member) != 999
 
 def can_moderate(member, target):
-    # Если передан User вместо Member
+    """Проверяет, может ли member модеррировать target"""
     if not hasattr(member, 'roles') or not hasattr(target, 'roles'):
         return False
     return get_admin_level(member) < get_admin_level(target)
 
-def get_role_hierarchy(guild: discord.Guild):
+def get_role_hierarchy(guild):
+    """Возвращает иерархию ролей администрации"""
     hierarchy = {}
     for i, role_name in enumerate(ADMIN_ROLES_IN_ORDER):
         role = discord.utils.get(guild.roles, name=role_name)
@@ -46,9 +45,10 @@ async def check_reminders(bot):
     while not bot.is_closed():
         try:
             reminders = db.get_pending_reminders()
+            now = datetime.now()
             
             for rid, uid, cid, msg, rtime in reminders:
-                if datetime.now() >= datetime.fromisoformat(rtime):
+                if now >= datetime.fromisoformat(rtime):
                     channel = bot.get_channel(cid)
                     if channel:
                         await channel.send(f"⏰ <@{uid}>, напоминание: {msg}")
