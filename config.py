@@ -1,31 +1,41 @@
 import logging
-import sqlite3
 import os
 
+# Токен бота
 TOKEN = os.getenv("TOKEN")
 
+# ID каналов и ролей
 WELCOME_CHANNEL_ID = 1510678225058267157
 LOG_CHANNEL_ID = 1510678500028321972
 TICKET_CATEGORY_ID = 1511091999468687651
 MUTE_ROLE_ID = 1511086391893819482
-OWNER_ID = 1510685758724374649
 GUILD_ID = 1510638426016448602
-PRIVATE_VOICE_CREATE_CHANNEL_ID = 1515757876780732427  
-PRIVATE_VOICE_CATEGORY_ID = 1515757790482927841  
+
+# Приватные голосовые комнаты
+PRIVATE_VOICE_CREATE_CHANNEL_ID = 1515757876780732427
+PRIVATE_VOICE_CATEGORY_ID = 1515757790482927841
 PRIVATE_VOICE_DELETE_TIMEOUT = 30
 
-BOT_NAME = "Saint-Rose"
+# Ссылки
+DISCORD_LINK = "https://discord.gg/saintroseproject"
+TELEGRAM_LINK = "https://t.me/saintroseproject"
 
-# ========== ССЫЛКИ ДЛЯ КНОПОК ==========
-DISCORD_LINK = "https://discord.gg/saintroseproject"  # 👈 ЗАМЕНИ НА СВОЮ
-TELEGRAM_LINK = "https://t.me/saintroseproject"        # 👈 ЗАМЕНИ НА СВОЮ
-
+# Иерархия ролей администрации (от высшей к низшей)
 ADMIN_ROLES_IN_ORDER = [
-    "Владелец", "Со-Владелец", "Зам. Владельца", "Saint-Rose Team",
-    "Управляющий", "Менеджер", "Зам. Менеджера", "Старший куратор",
-    "Куратор", "Высший администратор", "Старший администратор"
+    "Владелец",
+    "Со-Владелец",
+    "Зам. Владельца",
+    "Saint-Rose Team",
+    "Управляющий",
+    "Менеджер",
+    "Зам. Менеджера",
+    "Старший куратор",
+    "Куратор",
+    "Высший администратор",
+    "Старший администратор"
 ]
 
+# Система уровней
 XP_PER_MESSAGE_MIN = 5
 XP_PER_MESSAGE_MAX = 15
 LEVEL_UP_MULTIPLIER = 1.5
@@ -33,8 +43,9 @@ BASE_XP_NEEDED = 100
 
 MAX_CLEAR_MESSAGES = 100
 
+# Цвета для embed
 COLORS = {
-    "red": 0xFF0000,    
+    "red": 0xFF0000,
     "green": 0x00FF00,
     "blue": 0x3498db,
     "yellow": 0xFFD700,
@@ -43,11 +54,13 @@ COLORS = {
     "gold": 0xF1C40F,
 }
 
-BAD_WORDS = ["дурак", "идиот", "тупой", "дебил", "кретин", "шлюха", "мать", "папа", "бабушка", "сын", "дочь", "дедушка"]
+# Фильтр плохих слов
+BAD_WORDS = ["дурак", "идиот", "тупой", "дебил", "кретин", "шлюха", "мат"]
 
+# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger(BOT_NAME)
+logger = logging.getLogger("Saint-Rose")
