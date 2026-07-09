@@ -1,6 +1,6 @@
 import discord
 import random
-from config import BAD_WORDS, XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
+from config import XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
 import database as db
 
 def setup_events(bot):
@@ -44,3 +44,4 @@ def setup_events(bot):
         else:
             db.update_user_level(message.author.id, current_xp, current_level, new_msg_count)
         
+        await bot.process_commands(message)
