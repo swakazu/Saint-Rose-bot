@@ -1,8 +1,7 @@
 import discord
 from discord import app_commands
-from datetime import datetime 
-
-from utils import get_admin_level, get_role_hierarchy, ADMIN_ROLES_IN_ORDER, OWNER_ID
+from datetime import datetime
+from utils import get_admin_level, get_role_hierarchy, ADMIN_ROLES_IN_ORDER
 
 def setup_information_commands(bot):
     
@@ -14,7 +13,6 @@ def setup_information_commands(bot):
         )
         
         hierarchy = get_role_hierarchy(interaction.guild)
-        
         for role_name, data in hierarchy.items():
             if data["role"]:
                 icon = "👑" if role_name == "Владелец" else "⭐" if data["level"] <= 4 else "•"
@@ -27,12 +25,9 @@ def setup_information_commands(bot):
                 embed.add_field(name=f"❌ {role_name}", value="Роль не найдена", inline=False)
         
         await interaction.response.send_message(embed=embed)
-
+    
     @bot.tree.command(name="мояроль", description="Показать твой уровень в иерархии")
     async def my_role(interaction: discord.Interaction):
-        if interaction.user.id == OWNER_ID:
-            return await interaction.response.send_message("👑 Ты **Создатель сервера** — у тебя абсолютная власть!", ephemeral=True)
-        
         level = get_admin_level(interaction.user)
         
         if level == 999:
@@ -40,7 +35,7 @@ def setup_information_commands(bot):
         
         role_name = ADMIN_ROLES_IN_ORDER[level]
         await interaction.response.send_message(f"🔹 Твоя роль: **{role_name}** (уровень {level+1} из {len(ADMIN_ROLES_IN_ORDER)})", ephemeral=True)
-
+    
     @bot.tree.command(name="статистика", description="Показать статистику сервера")
     async def server_stats(interaction: discord.Interaction):
         guild = interaction.guild
