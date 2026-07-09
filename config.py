@@ -1,26 +1,21 @@
 import logging
 import os
 
-# Токен бота
 TOKEN = os.getenv("TOKEN")
 
-# ID каналов и ролей
 WELCOME_CHANNEL_ID = 1510678225058267157
 LOG_CHANNEL_ID = 1510678500028321972
 TICKET_CATEGORY_ID = 1511091999468687651
 MUTE_ROLE_ID = 1511086391893819482
 GUILD_ID = 1510638426016448602
 
-# Приватные голосовые комнаты
 PRIVATE_VOICE_CREATE_CHANNEL_ID = 1515757876780732427
 PRIVATE_VOICE_CATEGORY_ID = 1515757790482927841
 PRIVATE_VOICE_DELETE_TIMEOUT = 30
 
-# Ссылки
 DISCORD_LINK = "https://discord.gg/saintroseproject"
 TELEGRAM_LINK = "https://t.me/saintroseproject"
 
-# Иерархия ролей администрации (от высшей к низшей)
 ADMIN_ROLES_IN_ORDER = [
     "Владелец",
     "Со-Владелец",
@@ -35,7 +30,6 @@ ADMIN_ROLES_IN_ORDER = [
     "Старший администратор"
 ]
 
-# Система уровней
 XP_PER_MESSAGE_MIN = 5
 XP_PER_MESSAGE_MAX = 15
 LEVEL_UP_MULTIPLIER = 1.5
@@ -43,7 +37,6 @@ BASE_XP_NEEDED = 100
 
 MAX_CLEAR_MESSAGES = 100
 
-# Цвета для embed
 COLORS = {
     "red": 0xFF0000,
     "green": 0x00FF00,
@@ -54,10 +47,6 @@ COLORS = {
     "gold": 0xF1C40F,
 }
 
-# Фильтр плохих слов
-
-
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
