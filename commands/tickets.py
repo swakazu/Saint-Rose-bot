@@ -69,57 +69,57 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str, moda
     await interaction.response.send_message(f"✅ Тикет **{ticket_type}** создан! Переходи в {channel.mention}", ephemeral=True)
 
 
-# ============= МОДАЛЬНЫЕ ОКНА (ПРЯМО ЗДЕСЬ) =============
+# ============= МОДАЛЬНЫЕ ОКНА =============
 
 class AmnestyModal(discord.ui.Modal, title="⚠️ Запрос на амнистию"):
-    reason = discord.ui.TextInput(label="Причина нарушения", placeholder="За что вас наказали?", required=True, max_length=200)
-    date = discord.ui.TextInput(label="Дата нарушения", placeholder="Когда это было?", required=True, max_length=50)
-    why = discord.ui.TextInput(label="Почему стоит амнистировать", placeholder="Объясните", style=discord.TextStyle.paragraph, required=True, max_length=500)
+    reason_input = discord.ui.TextInput(label="Причина нарушения", placeholder="За что вас наказали?", required=True, max_length=200)
+    date_input = discord.ui.TextInput(label="Дата нарушения", placeholder="Когда это было?", required=True, max_length=50)
+    why_input = discord.ui.TextInput(label="Почему стоит амнистировать", placeholder="Объясните", style=discord.TextStyle.paragraph, required=True, max_length=500)
     
     async def on_submit(self, interaction: discord.Interaction):
         await create_ticket(interaction, "амнистия", {
-            "Причина нарушения": self.reason.value,
-            "Дата нарушения": self.date.value,
-            "Почему стоит амнистировать": self.why.value
+            "Причина нарушения": self.reason_input.value,
+            "Дата нарушения": self.date_input.value,
+            "Почему стоит амнистировать": self.why_input.value
         })
 
 
 class SuggestionModal(discord.ui.Modal, title="💡 Предложение по улучшению"):
-    title = discord.ui.TextInput(label="Название", placeholder="Кратко о чём предложение", required=True, max_length=100)
-    description = discord.ui.TextInput(label="Описание", placeholder="Подробно опишите идею", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    why = discord.ui.TextInput(label="Почему это нужно", placeholder="Как улучшит сервер?", style=discord.TextStyle.paragraph, required=True, max_length=500)
+    title_input = discord.ui.TextInput(label="Название", placeholder="Кратко о чём предложение", required=True, max_length=100)
+    description_input = discord.ui.TextInput(label="Описание", placeholder="Подробно опишите идею", style=discord.TextStyle.paragraph, required=True, max_length=1000)
+    why_input = discord.ui.TextInput(label="Почему это нужно", placeholder="Как улучшит сервер?", style=discord.TextStyle.paragraph, required=True, max_length=500)
     
     async def on_submit(self, interaction: discord.Interaction):
         await create_ticket(interaction, "предложение-по-улучшению", {
-            "Название": self.title.value,
-            "Описание": self.description.value,
-            "Почему это нужно": self.why.value
+            "Название": self.title_input.value,
+            "Описание": self.description_input.value,
+            "Почему это нужно": self.why_input.value
         })
 
 
 class HelpModal(discord.ui.Modal, title="😊 Проблемы и помощь"):
-    problem_type = discord.ui.TextInput(label="Тип проблемы", placeholder="Техническая / Конфликт / Вопрос", required=True, max_length=50)
-    description = discord.ui.TextInput(label="Описание", placeholder="Что случилось?", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    tried = discord.ui.TextInput(label="Что пробовали", placeholder="Что вы сделали?", required=False, max_length=500)
+    problem_type_input = discord.ui.TextInput(label="Тип проблемы", placeholder="Техническая / Конфликт / Вопрос", required=True, max_length=50)
+    description_input = discord.ui.TextInput(label="Описание", placeholder="Что случилось?", style=discord.TextStyle.paragraph, required=True, max_length=1000)
+    tried_input = discord.ui.TextInput(label="Что пробовали", placeholder="Что вы сделали?", required=False, max_length=500)
     
     async def on_submit(self, interaction: discord.Interaction):
         await create_ticket(interaction, "проблемы-и-помощь", {
-            "Тип проблемы": self.problem_type.value,
-            "Описание": self.description.value,
-            "Что пробовали": self.tried.value or "Не указано"
+            "Тип проблемы": self.problem_type_input.value,
+            "Описание": self.description_input.value,
+            "Что пробовали": self.tried_input.value or "Не указано"
         })
 
 
 class ComplaintModal(discord.ui.Modal, title="🔴 Жалоба на администратора"):
-    admin_name = discord.ui.TextInput(label="Ник администратора", placeholder="На кого жалоба?", required=True, max_length=50)
-    what_happened = discord.ui.TextInput(label="Что произошло", placeholder="Опишите ситуацию", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    evidence = discord.ui.TextInput(label="Доказательства", placeholder="Ссылки на скрины", required=False, max_length=500)
+    admin_name_input = discord.ui.TextInput(label="Ник администратора", placeholder="На кого жалоба?", required=True, max_length=50)
+    what_happened_input = discord.ui.TextInput(label="Что произошло", placeholder="Опишите ситуацию", style=discord.TextStyle.paragraph, required=True, max_length=1000)
+    evidence_input = discord.ui.TextInput(label="Доказательства", placeholder="Ссылки на скрины", required=False, max_length=500)
     
     async def on_submit(self, interaction: discord.Interaction):
         await create_ticket(interaction, "жалоба-на-администратора", {
-            "Администратор": self.admin_name.value,
-            "Ситуация": self.what_happened.value,
-            "Доказательства": self.evidence.value or "Не предоставлены"
+            "Администратор": self.admin_name_input.value,
+            "Ситуация": self.what_happened_input.value,
+            "Доказательства": self.evidence_input.value or "Не предоставлены"
         })
 
 
