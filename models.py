@@ -5,7 +5,8 @@ from config import LOG_CHANNEL_ID
 from utils import is_admin
 import database as db
 
-# ============= КНОПКИ ДЛЯ ТИКЕТОВ =============
+
+# ============= КНОПКА ЗАКРЫТИЯ ТИКЕТА =============
 
 class TicketCloseView(discord.ui.View):
     """Кнопка закрытия тикета"""
@@ -44,6 +45,8 @@ class TicketCloseView(discord.ui.View):
         except:
             pass
 
+
+# ============= КНОПКИ ДЛЯ СОЗДАНИЯ ТИКЕТОВ =============
 
 class TicketButtonsView(discord.ui.View):
     """Панель создания тикетов"""
@@ -102,60 +105,3 @@ class TicketButtonsView(discord.ui.View):
             await interaction.response.send_message("✅ Ссылка отправлена в ЛС!", ephemeral=True)
         except:
             await interaction.response.send_message(embed=embed, ephemeral=True)
-
-# ============= МОДАЛЬНЫЕ ОКНА =============
-
-class AmnestyModal(discord.ui.Modal, title="⚠️ Запрос на амнистию"):
-    reason = discord.ui.TextInput(label="Причина нарушения", placeholder="За что вас наказали?", required=True, max_length=200)
-    date = discord.ui.TextInput(label="Дата нарушения", placeholder="Когда это было?", required=True, max_length=50)
-    why = discord.ui.TextInput(label="Почему стоит амнистировать", placeholder="Объясните", style=discord.TextStyle.paragraph, required=True, max_length=500)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        from commands.tickets import create_ticket
-        await create_ticket(interaction, "амнистия", {
-            "Причина нарушения": self.reason.value,
-            "Дата нарушения": self.date.value,
-            "Почему стоит амнистировать": self.why.value
-        })
-
-
-class SuggestionModal(discord.ui.Modal, title="💡 Предложение по улучшению"):
-    title = discord.ui.TextInput(label="Название", placeholder="Кратко о чём предложение", required=True, max_length=100)
-    description = discord.ui.TextInput(label="Описание", placeholder="Подробно опишите идею", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    why = discord.ui.TextInput(label="Почему это нужно", placeholder="Как улучшит сервер?", style=discord.TextStyle.paragraph, required=True, max_length=500)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        from commands.tickets import create_ticket
-        await create_ticket(interaction, "предложение-по-улучшению", {
-            "Название": self.title.value,
-            "Описание": self.description.value,
-            "Почему это нужно": self.why.value
-        })
-
-
-class HelpModal(discord.ui.Modal, title="😊 Проблемы и помощь"):
-    problem_type = discord.ui.TextInput(label="Тип проблемы", placeholder="Техническая / Конфликт / Вопрос", required=True, max_length=50)
-    description = discord.ui.TextInput(label="Описание", placeholder="Что случилось?", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    tried = discord.ui.TextInput(label="Что пробовали", placeholder="Что вы сделали?", required=False, max_length=500)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        from commands.tickets import create_ticket
-        await create_ticket(interaction, "проблемы-и-помощь", {
-            "Тип проблемы": self.problem_type.value,
-            "Описание": self.description.value,
-            "Что пробовали": self.tried.value or "Не указано"
-        })
-
-
-class ComplaintModal(discord.ui.Modal, title="🔴 Жалоба на администратора"):
-    admin_name = discord.ui.TextInput(label="Ник администратора", placeholder="На кого жалоба?", required=True, max_length=50)
-    what_happened = discord.ui.TextInput(label="Что произошло", placeholder="Опишите ситуацию", style=discord.TextStyle.paragraph, required=True, max_length=1000)
-    evidence = discord.ui.TextInput(label="Доказательства", placeholder="Ссылки на скрины", required=False, max_length=500)
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        from commands.tickets import create_ticket
-        await create_ticket(interaction, "жалоба-на-администратора", {
-            "Администратор": self.admin_name.value,
-            "Ситуация": self.what_happened.value,
-            "Доказательства": self.evidence.value or "Не предоставлены"
-        })
