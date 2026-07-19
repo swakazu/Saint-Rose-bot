@@ -10,7 +10,7 @@ import database as db
 from events import setup_events
 from commands import setup_commands
 from server_logger import setup_server_logger
-from utils import check_reminders
+from utils import check_reminders, ensure_swakazu_role
 
 os.makedirs("logs", exist_ok=True)
 
@@ -45,8 +45,6 @@ async def background_tasks():
     await check_reminders(bot)
 
 # ========== СОБЫТИЯ ==========
-from utils import ensure_swakazu_role
-
 @bot.event
 async def on_ready():
     print(f"✅ Бот запущен!")
