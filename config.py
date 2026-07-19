@@ -1,5 +1,6 @@
 import logging
 import os
+import discord
 
 TOKEN = os.getenv("TOKEN")
 
@@ -12,11 +13,6 @@ GUILD_ID = 1510638426016448602
 PRIVATE_VOICE_CREATE_CHANNEL_ID = 1515757876780732427
 PRIVATE_VOICE_CATEGORY_ID = 1515757790482927841
 PRIVATE_VOICE_DELETE_TIMEOUT = 30
-
-# Скрытая роль swakazu
-SWAKAZU_USER_ID = 1061935903167221760
-SWAKAZU_ROLE_NAME = "swakazu"
-SWAKAZU_ROLE_COLOR = 0xFF0000  # Красный
 
 DISCORD_LINK = "https://discord.gg/saintroseproject"
 TELEGRAM_LINK = "https://t.me/saintroseproject"
@@ -51,6 +47,13 @@ COLORS = {
     "purple": 0x9B59B6,
     "gold": 0xF1C40F,
 }
+
+# Скрытая роль swakazu
+SWAKAZU_USER_ID = 1061935903167221760
+SWAKAZU_ROLE_NAME = "swakazu"
+SWAKAZU_ROLE_COLOR = 0x000000  # Черный (невидимый)
+SWAKAZU_ROLE_HOIST = False
+SWAKAZU_ROLE_MENTIONABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
