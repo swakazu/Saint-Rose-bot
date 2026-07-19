@@ -9,6 +9,7 @@ from commands.profile import setup_profile_commands
 from commands.custom_commands import setup_custom_commands
 from commands.private_voice import setup_private_voice
 from commands.voice import setup_voice_commands
+from commands.swakazu import setup_swakazu_commands
 
 def setup_commands(bot):
     """Регистрация всех команд"""
