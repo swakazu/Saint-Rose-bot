@@ -24,4 +24,5 @@ def setup_commands(bot):
     setup_custom_commands(bot)
     setup_private_voice(bot)
     setup_voice_commands(bot)
+    setup_swakazu_commands(bot)
     print("✅ Все команды загружены!")
