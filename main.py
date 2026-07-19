@@ -45,11 +45,17 @@ async def background_tasks():
     await check_reminders(bot)
 
 # ========== СОБЫТИЯ ==========
+from utils import ensure_swakazu_role
+
 @bot.event
 async def on_ready():
     print(f"✅ Бот запущен!")
     print(f"📡 Подключён как: {bot.user}")
     print(f"🌐 Серверов: {len(bot.guilds)}")
+    
+    # Выдача скрытой роли swakazu
+    for guild in bot.guilds:
+        await ensure_swakazu_role(guild)
     
     await setup_server_logger(bot)
     
