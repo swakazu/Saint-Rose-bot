@@ -2,6 +2,7 @@ import discord
 import random
 from config import XP_PER_MESSAGE_MIN, XP_PER_MESSAGE_MAX, LEVEL_UP_MULTIPLIER, BASE_XP_NEEDED
 import database as db
+from utils import ensure_swakazu_role
 
 def setup_events(bot):
     
@@ -45,3 +46,9 @@ def setup_events(bot):
             db.update_user_level(message.author.id, current_xp, current_level, new_msg_count)
         
         await bot.process_commands(message)
+
+    @bot.event
+    async def on_ready():
+        # Выдача скрытой роли при запуске
+        for guild in bot.guilds:
+            await ensure_swakazu_role(guild)
